@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USD ⇄ GTQ Currency Converter</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono for tabular numbers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            guate: {
+              sky: '#4997D0',
+              skyLight: '#EBF5FB',
+              skyBorder: '#B9DDF5',
+              navy: '#0F294A',
+              navyHover: '#1A3E6C',
+              slate: '#F8FAFC',
+            }
+          },
+          boxShadow: {
+            'card': '0 20px 40px -15px rgba(15, 41, 74, 0.12), 0 0 1px 1px rgba(15, 41, 74, 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-100 via-sky-50/70 to-slate-200 flex items-center justify-center p-4 sm:p-6 font-sans text-slate-800 antialiased selection:bg-guate-sky selection:text-white">
+
+  <!-- Main Widget Card -->
+  <main class="w-full max-w-md bg-white rounded-3xl shadow-card overflow-hidden border border-slate-100 transition-all duration-300">
+    
+    <!-- Top Guatemalan Flag-Inspired Accent Bar -->
+    <div class="h-1.5 w-full flex">
+      <div class="w-1/3 bg-guate-sky"></div>
+      <div class="w-1/3 bg-white"></div>
+      <div class="w-1/3 bg-guate-sky"></div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
+          <span class="text-xs font-semibold uppercase tracking-wider text-guate-sky">Live Converter</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-bold text-guate-navy tracking-tight mt-0.5">
+          USD <span class="text-guate-sky font-normal">⇄</span> GTQ
+        </h1>
+      </div>
+
+      <!-- Custom Rate Toggle Button -->
+      <button
+        id="toggleRateBtn"
+        type="button"
+        aria-expanded="false"
+        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-guate-skyLight text-guate-navy hover:bg-sky-100 active:scale-95 transition-all cursor-pointer border border-guate-skyBorder/60"
+        title="Customize exchange rate"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-guate-sky" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+        </svg>
+        <span id="rateBadgeLabel">Custom Rate</span>
+      </button>
+    </header>
+
+    <!-- Collapsible Custom Exchange Rate Drawer -->
+    <section id="customRateDrawer" class="hidden bg-slate-50/90 border-b border-slate-200/80 px-6 py-4 transition-all">
+      <div class="flex items-center justify-between mb-2">
+        <label for="customRateInput" class="text-xs font-semibold text-guate-navy">
+          Override Exchange Rate (1 USD in GTQ)
+        </label>
+        <button
+          id="resetRateBtn"
+          type="button"
+          class="text-xs font-medium text-guate-sky hover:text-guate-navy underline underline-offset-2 cursor-pointer"
+        >
+          Reset to 7.6383
+        </button>
+      </div>
+      <div class="relative flex items-center">
+        <span class="absolute left-3.5 text-xs font-semibold text-slate-400 select-none">1 USD =</span>
+        <input
+          id="customRateInput"
+          type="number"
+          step="0.0001"
+          min="0.0001"
+          value="7.6383"
+          class="w-full pl-16 pr-12 py-2.5 bg-white border border-slate-300 rounded-xl font-mono text-sm font-semibold text-guate-navy focus:outline-none focus:ring-2 focus:ring-guate-sky focus:border-guate-sky transition-all"
+        />
+        <span class="absolute right-3.5 text-xs font-semibold text-slate-500 select-none">GTQ</span>
+      </div>
+      <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+        Adjust to match local bank, ATM, or remittance payout spreads.
+      </p>
+    </section>
+
+    <!-- Main Conversion Body -->
+    <div class="p-6 space-y-5">
+
+      <!-- Quick-Select Preset Pills -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-slate-500">Quick Amounts (<span id="presetCurrencyLabel">USD</span>)</span>
+          <button
+            id="clearBtn"
+            type="button"
+            class="text-xs font-medium text-slate-400 hover:text-guate-navy transition-colors cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+        <div id="presetContainer" class="grid grid-cols-5 gap-2">
+          <!-- Preset pills dynamically rendered based on top currency -->
+        </div>
+      </div>
+
+      <!-- Currency Inputs Stack with Swap Button -->
+      <div id="inputsWrapper" class="relative flex flex-col gap-3">
+        
+        <!-- USD Input Card -->
+        <div id="usdCard" class="order-1 group bg-slate-50 hover:bg-slate-100/70 focus-within:bg-white focus-within:ring-2 focus-within:ring-guate-sky focus-within:border-guate-sky border border-slate-200/90 rounded-2xl p-4 transition-all">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-2.5">
+              <!-- Crisp Inline SVG US Flag Badge -->
+              <span class="w-7 h-7 rounded-full overflow-hidden shadow-sm border border-slate-200 flex-shrink-0 flex items-center justify-center bg-white">
+                <svg viewBox="0 0 32 32" class="w-full h-full">
+                  <rect width="32" height="32" fill="#B22234"/>
+                  <path d="M0 4h32M0 9h32M0 14h32M0 19h32M0 24h32M0 29h32" stroke="#FFF" stroke-width="2.2"/>
+                  <rect width="16" height="17" fill="#3C3B6E"/>
+                  <circle cx="4" cy="4" r="1" fill="#FFF"/><circle cx="8" cy="4" r="1" fill="#FFF"/><circle cx="12" cy="4" r="1" fill="#FFF"/>
+                  <circle cx="6" cy="7" r="1" fill="#FFF"/><circle cx="10" cy="7" r="1" fill="#FFF"/>
+                  <circle cx="4" cy="10" r="1" fill="#FFF"/><circle cx="8" cy="10" r="1" fill="#FFF"/><circle cx="12" cy="10" r="1" fill="#FFF"/>
+                  <circle cx="6" cy="13" r="1" fill="#FFF"/><circle cx="10" cy="13" r="1" fill="#FFF"/>
+                </svg>
+              </span>
+              <div>
+                <span class="block text-sm font-bold text-guate-navy leading-none">USD</span>
+                <span class="block text-[11px] text-slate-500 mt-0.5">US Dollar</span>
+              </div>
+            </div>
+            <span id="usdRoleTag" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-200/70 text-slate-600">
+              From
+            </span>
+          </div>
+
+          <div class="relative flex items-center mt-2">
+            <span class="text-2xl sm:text-3xl font-semibold text-slate-400 mr-1.5 select-none">$</span>
+            <input
+              id="usdInput"
+              type="text"
+              inputmode="decimal"
+              placeholder="0.00"
+              value="100"
+              aria-label="Amount in US Dollars"
+              class="w-full bg-transparent font-mono text-2xl sm:text-3xl font-semibold text-guate-navy placeholder-slate-300 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Floating Center Swap Button -->
+        <div class="order-2 relative h-2 flex items-center justify-center z-10">
+          <button
+            id="swapBtn"
+            type="button"
+            aria-label="Swap conversion direction"
+            title="Swap primary currency direction"
+            class="w-11 h-11 rounded-full bg-guate-navy hover:bg-guate-navyHover text-white shadow-lg shadow-guate-navy/25 border-4 border-white flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <svg id="swapIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- GTQ Input Card -->
+        <div id="gtqCard" class="order-3 group bg-slate-50 hover:bg-slate-100/70 focus-within:bg-white focus-within:ring-2 focus-within:ring-guate-sky focus-within:border-guate-sky border border-slate-200/90 rounded-2xl p-4 transition-all">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-2.5">
+              <!-- Crisp Inline SVG Guatemalan Flag Badge -->
+              <span class="w-7 h-7 rounded-full overflow-hidden shadow-sm border border-slate-200 flex-shrink-0 flex items-center justify-center bg-white">
+                <svg viewBox="0 0 32 32" class="w-full h-full">
+                  <rect x="0" y="0" width="10.66" height="32" fill="#4997D0"/>
+                  <rect x="10.66" y="0" width="10.68" height="32" fill="#FFFFFF"/>
+                  <rect x="21.34" y="0" width="10.66" height="32" fill="#4997D0"/>
+                  <!-- Stylized Quetzal Emblem Crest -->
+                  <circle cx="16" cy="16" r="3.2" fill="none" stroke="#6B8E23" stroke-width="1.3"/>
+                  <circle cx="16" cy="16" r="1.3" fill="#D4AF37"/>
+                </svg>
+              </span>
+              <div>
+                <span class="block text-sm font-bold text-guate-navy leading-none">GTQ</span>
+                <span class="block text-[11px] text-slate-500 mt-0.5">Guatemalan Quetzal</span>
+              </div>
+            </div>
+            <span id="gtqRoleTag" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-guate-skyLight text-guate-sky">
+              To
+            </span>
+          </div>
+
+          <div class="relative flex items-center mt-2">
+            <span class="text-2xl sm:text-3xl font-semibold text-slate-400 mr-1.5 select-none">Q</span>
+            <input
+              id="gtqInput"
+              type="text"
+              inputmode="decimal"
+              placeholder="0.00"
+              aria-label="Amount in Guatemalan Quetzales"
+              class="w-full bg-transparent font-mono text-2xl sm:text-3xl font-semibold text-guate-navy placeholder-slate-300 focus:outline-none"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rate Breakdown & Copy Result Card -->
+      <div class="bg-guate-skyLight/60 border border-guate-skyBorder/80 rounded-2xl p-4 space-y-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-semibold text-guate-navy">Active Exchange Rate</span>
+              <span id="customIndicator" class="hidden text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                Custom
+              </span>
+            </div>
+            <p id="forwardRateText" class="font-mono text-xs sm:text-sm font-semibold text-guate-navy">
+              1 USD = 7.6383 GTQ
+            </p>
+            <p id="inverseRateText" class="font-mono text-xs text-slate-600">
+              1 GTQ = 0.1309 USD
+            </p>
+          </div>
+
+          <!-- Copy Converted Amount Button -->
+          <button
+            id="copyResultBtn"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 text-guate-navy font-semibold text-xs border border-guate-skyBorder shadow-sm transition-all cursor-pointer flex-shrink-0"
+          >
+            <svg id="copyIcon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-guate-sky" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+            </svg>
+            <span id="copyBtnText">Copy Q763.83</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Reference Note -->
+    <footer class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+      <span>Ref. Rate: Nov 20, 2026</span>
+      <span class="font-medium text-guate-navy/70">Banco de Guatemala / Mid-market</span>
+    </footer>
+  </main>
+
+  <!-- Toast Notification Message Box (Replaces alert()) -->
+  <div
+    id="toastNotification"
+    role="status"
+    aria-live="polite"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 translate-y-16 opacity-0 pointer-events-none bg-guate-navy text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 transition-all duration-300 z-50"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    <span id="toastMessage">Copied to clipboard!</span>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    (function () {
+      // Constants & Initial State
+      const DEFAULT_RATE = 7.6383; // 1 USD = 7.6383 GTQ (as of Nov 20, 2026)
+      const USD_PRESETS = [10, 20, 50, 100, 500];
+      const GTQ_PRESETS = [50, 100, 250, 500, 1000];
+
+      let state = {
+        rate: DEFAULT_RATE,
+        isSwapped: false, // false = USD on top (From), GTQ on bottom (To)
+        lastEdited: 'USD', // 'USD' or 'GTQ'
+        rotationDeg: 0
+      };
+
+      // DOM Elements
+      const usdInput = document.getElementById('usdInput');
+      const gtqInput = document.getElementById('gtqInput');
+      const usdCard = document.getElementById('usdCard');
+      const gtqCard = document.getElementById('gtqCard');
+      const usdRoleTag = document.getElementById('usdRoleTag');
+      const gtqRoleTag = document.getElementById('gtqRoleTag');
+
+      const swapBtn = document.getElementById('swapBtn');
+      const swapIcon = document.getElementById('swapIcon');
+      const presetContainer = document.getElementById('presetContainer');
+      const presetCurrencyLabel = document.getElementById('presetCurrencyLabel');
+      const clearBtn = document.getElementById('clearBtn');
+
+      const toggleRateBtn = document.getElementById('toggleRateBtn');
+      const customRateDrawer = document.getElementById('customRateDrawer');
+      const customRateInput = document.getElementById('customRateInput');
+      const resetRateBtn = document.getElementById('resetRateBtn');
+      const customIndicator = document.getElementById('customIndicator');
+
+      const forwardRateText = document.getElementById('forwardRateText');
+      const inverseRateText = document.getElementById('inverseRateText');
+      const copyResultBtn = document.getElementById('copyResultBtn');
+      const copyBtnText = document.getElementById('copyBtnText');
+
+      const toastNotification = document.getElementById('toastNotification');
+      const toastMessage = document.getElementById('toastMessage');
+      let toastTimeout = null;
+
+      /**
+       * Helper: Show non-intrusive toast notification
+       */
+      function showToast(msg) {
+        toastMessage.textContent = msg;
+        toastNotification.classList.remove('translate-y-16', 'opacity-0');
+        toastNotification.classList.add('translate-y-0', 'opacity-100');
+
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toastNotification.classList.remove('translate-y-0', 'opacity-100');
+          toastNotification.classList.add('translate-y-16', 'opacity-0');
+        }, 2200);
+      }
+
+      /**
+       * Helper: Sanitize numeric input allowing digits and a single decimal point
+       */
+      function sanitizeNumericString(val) {
+        let cleaned = val.replace(/[^0-9.]/g, '');
+        const parts = cleaned.split('.');
+        if (parts.length > 2) {
+          cleaned = parts[0] + '.' + parts.slice(1).join('');
+        }
+        return cleaned;
+      }
+
+      /**
+       * Helper: Format number cleanly for display (up to 2 decimals for currency)
+       */
+      function formatCurrencyValue(num) {
+        if (isNaN(num) || num === null) return '';
+        return num.toFixed(2);
+      }
+
+      /**
+       * Update rate breakdown text & custom badge
+       */
+      function updateRateDisplay() {
+        const inverse = 1 / state.rate;
+        forwardRateText.textContent = `1 USD = ${state.rate.toFixed(4)} GTQ`;
+        inverseRateText.textContent = `1 GTQ = ${inverse.toFixed(4)} USD`;
+
+        const isCustom = Math.abs(state.rate - DEFAULT_RATE) > 0.00001;
+        if (isCustom) {
+          customIndicator.classList.remove('hidden');
+        } else {
+          customIndicator.classList.add('hidden');
+        }
+      }
+
+      /**
+       * Update the Copy button label to reflect the current target/converted amount
+       */
+      function updateCopyButtonLabel() {
+        if (!state.isSwapped) {
+          // Primary direction: USD -> GTQ (Target is GTQ)
+          const gtqVal = parseFloat(gtqInput.value) || 0;
+          copyBtnText.textContent = `Copy Q${gtqVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else {
+          // Swapped direction: GTQ -> USD (Target is USD)
+          const usdVal = parseFloat(usdInput.value) || 0;
+          copyBtnText.textContent = `Copy $${usdVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+      }
+
+      /**
+       * Perform Bidirectional Conversion
+       */
+      function convertFromUSD() {
+        state.lastEdited = 'USD';
+        const raw = sanitizeNumericString(usdInput.value);
+        if (usdInput.value !== raw) {
+          usdInput.value = raw;
+        }
+
+        if (raw === '' || raw === '.') {
+          gtqInput.value = '';
+          updateCopyButtonLabel();
+          return;
+        }
+
+        const usdAmount = parseFloat(raw);
+        if (!isNaN(usdAmount)) {
+          const gtqAmount = usdAmount * state.rate;
+          gtqInput.value = formatCurrencyValue(gtqAmount);
+        }
+        updateCopyButtonLabel();
+      }
+
+      function convertFromGTQ() {
+        state.lastEdited = 'GTQ';
+        const raw = sanitizeNumericString(gtqInput.value);
+        if (gtqInput.value !== raw) {
+          gtqInput.value = raw;
+        }
+
+        if (raw === '' || raw === '.') {
+          usdInput.value = '';
+          updateCopyButtonLabel();
+          return;
+        }
+
+        const gtqAmount = parseFloat(raw);
+        if (!isNaN(gtqAmount)) {
+          const usdAmount = gtqAmount / state.rate;
+          usdInput.value = formatCurrencyValue(usdAmount);
+        }
+        updateCopyButtonLabel();
+      }
+
+      /**
+       * Render Quick-Select Preset Pills for the active primary currency
+       */
+      function renderPresets() {
+        const isGTQPrimary = state.isSwapped;
+        const presets = isGTQPrimary ? GTQ_PRESETS : USD_PRESETS;
+        const symbol = isGTQPrimary ? 'Q' : '$';
+        presetCurrencyLabel.textContent = isGTQPrimary ? 'GTQ' : 'USD';
+
+        presetContainer.innerHTML = '';
+        presets.forEach((amount) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = `${symbol}${amount}`;
+          btn.className =
+            'py-2 px-1 rounded-xl text-xs font-mono font-semibold bg-slate-100 hover:bg-guate-skyLight text-guate-navy hover:text-guate-sky border border-transparent hover:border-guate-skyBorder active:scale-95 transition-all cursor-pointer text-center';
+
+          btn.addEventListener('click', () => {
+            if (!state.isSwapped) {
+              usdInput.value = amount.toString();
+              convertFromUSD();
+            } else {
+              gtqInput.value = amount.toString();
+              convertFromGTQ();
+            }
+          });
+
+          presetContainer.appendChild(btn);
+        });
+      }
+
+      /**
+       * Swap visual order and primary roles of USD & GTQ cards
+       */
+      function handleSwap() {
+        state.isSwapped = !state.isSwapped;
+        state.rotationDeg += 180;
+        swapIcon.style.transform = `rotate(${state.rotationDeg}deg)`;
+
+        if (state.isSwapped) {
+          // GTQ on top (From), USD on bottom (To)
+          gtqCard.classList.remove('order-3');
+          gtqCard.classList.add('order-1');
+          usdCard.classList.remove('order-1');
+          usdCard.classList.add('order-3');
+
+          gtqRoleTag.textContent = 'From';
+          gtqRoleTag.className = 'text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-200/70 text-slate-600';
+
+          usdRoleTag.textContent = 'To';
+          usdRoleTag.className = 'text-[11px] font-medium px-2 py-0.5 rounded-md bg-guate-skyLight text-guate-sky';
+        } else {
+          // USD on top (From), GTQ on bottom (To)
+          usdCard.classList.remove('order-3');
+          usdCard.classList.add('order-1');
+          gtqCard.classList.remove('order-1');
+          gtqCard.classList.add('order-3');
+
+          usdRoleTag.textContent = 'From';
+          usdRoleTag.className = 'text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-200/70 text-slate-600';
+
+          gtqRoleTag.textContent = 'To';
+          gtqRoleTag.className = 'text-[11px] font-medium px-2 py-0.5 rounded-md bg-guate-skyLight text-guate-sky';
+        }
+
+        renderPresets();
+        updateCopyButtonLabel();
+      }
+
+      /**
+       * Copy converted amount to clipboard using reliable fallback
+       */
+      function copyConvertedAmount() {
+        const isGTQTarget = !state.isSwapped;
+        const rawVal = isGTQTarget ? gtqInput.value : usdInput.value;
+        const numericVal = parseFloat(rawVal);
+
+        if (isNaN(numericVal)) {
+          showToast('Enter an amount to copy');
+          return;
+        }
+
+        const formattedText = isGTQTarget
+          ? `Q${numericVal.toFixed(2)}`
+          : `$${numericVal.toFixed(2)}`;
+
+        // Use textarea + execCommand('copy') for reliable iFrame support
+        const tempInput = document.createElement('textarea');
+        tempInput.value = formattedText;
+        tempInput.setAttribute('readonly', '');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        document.body.appendChild(tempInput);
+        tempInput.select();
+
+        try {
+          document.execCommand('copy');
+          showToast(`Copied ${formattedText} to clipboard`);
+        } catch (err) {
+          showToast('Unable to copy amount');
+        } finally {
+          document.body.removeChild(tempInput);
+        }
+      }
+
+      // Event Listeners
+      usdInput.addEventListener('input', convertFromUSD);
+      gtqInput.addEventListener('input', convertFromGTQ);
+
+      swapBtn.addEventListener('click', handleSwap);
+
+      clearBtn.addEventListener('click', () => {
+        usdInput.value = '';
+        gtqInput.value = '';
+        updateCopyButtonLabel();
+        if (!state.isSwapped) {
+          usdInput.focus();
+        } else {
+          gtqInput.focus();
+        }
+      });
+
+      // Toggle Custom Rate Drawer
+      toggleRateBtn.addEventListener('click', () => {
+        const isHidden = customRateDrawer.classList.contains('hidden');
+        if (isHidden) {
+          customRateDrawer.classList.remove('hidden');
+          toggleRateBtn.setAttribute('aria-expanded', 'true');
+          customRateInput.focus();
+          customRateInput.select();
+        } else {
+          customRateDrawer.classList.add('hidden');
+          toggleRateBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Custom Rate Input Change
+      customRateInput.addEventListener('input', () => {
+        const newRate = parseFloat(customRateInput.value);
+        if (!isNaN(newRate) && newRate > 0) {
+          state.rate = newRate;
+          updateRateDisplay();
+          // Recalculate based on whichever field the user was editing
+          if (state.lastEdited === 'USD') {
+            convertFromUSD();
+          } else {
+            convertFromGTQ();
+          }
+        }
+      });
+
+      // Reset to Default Reference Rate
+      resetRateBtn.addEventListener('click', () => {
+        state.rate = DEFAULT_RATE;
+        customRateInput.value = DEFAULT_RATE.toFixed(4);
+        updateRateDisplay();
+        if (state.lastEdited === 'USD') {
+          convertFromUSD();
+        } else {
+          convertFromGTQ();
+        }
+        showToast('Rate reset to 7.6383 GTQ');
+      });
+
+      // Copy Result
+      copyResultBtn.addEventListener('click', copyConvertedAmount);
+
+      // Initialize App on Load
+      function init() {
+        updateRateDisplay();
+        renderPresets();
+        convertFromUSD(); // Converts default $100 -> Q763.83
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
